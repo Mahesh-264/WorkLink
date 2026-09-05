@@ -1,0 +1,1 @@
+package com.worklink.dto.proposal; import com.worklink.entity.enums.ProposalStatus; import jakarta.validation.constraints.NotNull; public record ProposalStatusRequest(@NotNull ProposalStatus status){}

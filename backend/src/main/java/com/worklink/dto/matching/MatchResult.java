@@ -1,0 +1,1 @@
+package com.worklink.dto.matching; import java.util.List; public record MatchResult(Long freelancerId,String freelancerName,double compatibilityScore,double skillMatchScore,double proficiencyScore,double experienceScore,double portfolioRelevanceScore,double budgetCompatibilityScore,List<String> matchedSkills,List<String> missingSkills,String explanation){}
