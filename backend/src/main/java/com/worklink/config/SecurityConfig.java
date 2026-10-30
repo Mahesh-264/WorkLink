@@ -43,38 +43,50 @@ public class SecurityConfig {
 
         http
                 .cors(Customizer.withDefaults())
+
                 .csrf(AbstractHttpConfigurer::disable)
+
                 .formLogin(AbstractHttpConfigurer::disable)
+
                 .httpBasic(AbstractHttpConfigurer::disable)
+
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
                         )
                 )
+
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler)
                 )
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/api/health")
-                        .permitAll()
 
+                .authorizeHttpRequests(auth -> auth
+
+                        // Public health endpoint
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/health"
+                        ).permitAll()
+
+                        // Public registration and login endpoints
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/auth/register",
                                 "/api/auth/login"
-                        )
-                        .permitAll()
+                        ).permitAll()
 
-                        .requestMatchers("/actuator/**")
-                        .permitAll()
+                        // Actuator endpoints
+                        .requestMatchers("/actuator/**").permitAll()
 
-                        .requestMatchers("/api/**")
-                        .authenticated()
+                        // All other API endpoints require authentication
+                        .requestMatchers("/api/**").authenticated()
 
-                        .anyRequest()
-                        .denyAll()
+                        // Deny all other requests
+                        .anyRequest().denyAll()
                 )
+
+                // Add JWT authentication filter
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
@@ -105,6 +117,9 @@ public class SecurityConfig {
         return registration;
     }
 
+    /**
+     * CORS configuration for local development and deployed Vercel frontend.
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
@@ -132,8 +147,8 @@ public class SecurityConfig {
                 "Origin"
         ));
 
-        // Your frontend uses JWT in the Authorization header.
-        // Cookie-based credentials are not needed for this setup.
+        // JWT is sent through the Authorization header.
+        // Cookie-based credentials are not required.
         configuration.setAllowCredentials(false);
 
         configuration.setMaxAge(3600L);
