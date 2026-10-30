@@ -39,6 +39,10 @@ public class Project extends BaseEntity {
     @JoinColumn(name = "client_id", nullable = false)
     private ClientProfile client;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "accepted_freelancer_id")
+    private FreelancerProfile acceptedFreelancer;
+
     @Column(name = "title", nullable = false, length = 200)
     private String title;
 
@@ -67,6 +71,9 @@ public class Project extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "complexity", nullable = false, length = 30)
     private ProjectComplexity complexity = ProjectComplexity.MEDIUM;
+
+    @Column(name = "progress_percentage")
+    private Integer progressPercentage = 0;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
@@ -103,6 +110,9 @@ public class Project extends BaseEntity {
     public void setClient(ClientProfile client) {
         this.client = client;
     }
+
+    public FreelancerProfile getAcceptedFreelancer() { return acceptedFreelancer; }
+    public void setAcceptedFreelancer(FreelancerProfile acceptedFreelancer) { this.acceptedFreelancer = acceptedFreelancer; }
 
     public String getTitle() {
         return title;
@@ -168,6 +178,14 @@ public class Project extends BaseEntity {
 
     public void setComplexity(ProjectComplexity complexity) {
         this.complexity = complexity;
+    }
+
+    public Integer getProgressPercentage() {
+        return progressPercentage;
+    }
+
+    public void setProgressPercentage(Integer progressPercentage) {
+        this.progressPercentage = progressPercentage;
     }
 
     public ProjectStatus getStatus() {

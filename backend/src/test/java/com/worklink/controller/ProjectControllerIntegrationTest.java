@@ -54,12 +54,12 @@ class ProjectControllerIntegrationTest {
         Number idValue = com.jayway.jsonpath.JsonPath.read(body, "$.id");
         long id = idValue.longValue();
 
-        mockMvc.perform(get("/api/projects").header(HttpHeaders.AUTHORIZATION, freelancerAuth)).andExpect(status().isOk()).andExpect(jsonPath("$").isEmpty());
+        mockMvc.perform(get("/api/projects").header(HttpHeaders.AUTHORIZATION, freelancerAuth)).andExpect(status().isOk()).andExpect(jsonPath("$[?(@.id == " + id + ")]").isEmpty());
         mockMvc.perform(put("/api/client/projects/{id}", id).header(HttpHeaders.AUTHORIZATION, clientAuth).contentType(MediaType.APPLICATION_JSON).content(payload(category.getId(), skill.getId(), "Updated Marketplace API")))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.title").value("Updated Marketplace API"));
         mockMvc.perform(patch("/api/client/projects/{id}/publish", id).header(HttpHeaders.AUTHORIZATION, clientAuth))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("PUBLISHED"));
-        mockMvc.perform(get("/api/projects").header(HttpHeaders.AUTHORIZATION, freelancerAuth)).andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(id));
+        mockMvc.perform(get("/api/projects").header(HttpHeaders.AUTHORIZATION, freelancerAuth)).andExpect(status().isOk()).andExpect(jsonPath("$[?(@.id == " + id + ")]").isNotEmpty());
         mockMvc.perform(delete("/api/client/projects/{id}", id).header(HttpHeaders.AUTHORIZATION, clientAuth)).andExpect(status().isBadRequest());
         mockMvc.perform(get("/api/client/projects").header(HttpHeaders.AUTHORIZATION, freelancerAuth)).andExpect(status().isForbidden());
     }

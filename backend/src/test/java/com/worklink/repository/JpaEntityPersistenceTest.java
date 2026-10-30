@@ -7,6 +7,8 @@ import com.worklink.entity.FreelancerSkill;
 import com.worklink.entity.Project;
 import com.worklink.entity.ProjectSkill;
 import com.worklink.entity.Proposal;
+import com.worklink.entity.MatchingEvaluationRecord;
+import com.worklink.entity.TrustHistory;
 import com.worklink.entity.Skill;
 import com.worklink.entity.User;
 import com.worklink.entity.enums.AccountStatus;
@@ -16,6 +18,7 @@ import com.worklink.entity.enums.ProposalStatus;
 import com.worklink.entity.enums.Role;
 import com.worklink.entity.enums.SkillImportance;
 import com.worklink.entity.enums.SkillProficiency;
+import com.worklink.entity.enums.MatchingOutcomeLabel;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -61,6 +65,64 @@ class JpaEntityPersistenceTest {
 
     @Autowired
     private ProposalRepository proposalRepository;
+
+    @Autowired
+    private TrustHistoryRepository trustHistoryRepository;
+
+    @Autowired
+    private MatchingEvaluationRecordRepository matchingEvaluationRecordRepository;
+
+    @Test
+    void shouldPersistMatchingEvaluationProjectFreelancerAndAcceptedProposalRelationships() {
+        User clientUser = userRepository.saveAndFlush(new User("Eval", "Client", "eval-client@example.com", "hash", Role.CLIENT, AccountStatus.ACTIVE));
+        ClientProfile client = clientProfileRepository.saveAndFlush(new ClientProfile(clientUser, "Eval Corp", "desc", "Tech", "Remote", null));
+        User freelancerUser = userRepository.saveAndFlush(new User("Eval", "Freelancer", "eval-freelancer@example.com", "hash", Role.FREELANCER, AccountStatus.ACTIVE));
+        FreelancerProfile freelancer = freelancerProfileRepository.saveAndFlush(new FreelancerProfile(freelancerUser, "Builder", "Bio", "Remote", 4, new BigDecimal("40"), "AVAILABLE"));
+        Project project = projectRepository.saveAndFlush(new Project(client, "Observed delivery", "Real completed project", null,
+                new BigDecimal("100"), new BigDecimal("200"), 2, LocalDate.now().plusDays(10), ProjectComplexity.MEDIUM, ProjectStatus.COMPLETED));
+        project.setAcceptedFreelancer(freelancer);
+        projectRepository.saveAndFlush(project);
+        Proposal proposal = proposalRepository.saveAndFlush(new Proposal(project, freelancer, "Accepted bid", new BigDecimal("150"), 7, ProposalStatus.ACCEPTED, null));
+
+        MatchingEvaluationRecord record = new MatchingEvaluationRecord();
+        record.setProject(project); record.setFreelancer(freelancer); record.setAcceptedProposal(proposal);
+        record.setOutcomeLabel(MatchingOutcomeLabel.POSITIVE_OUTCOME); record.setProjectCompleted(true);
+        record.setCompletedOnTime(true); record.setClientRating(5); record.setMilestoneSuccessRate(100.0);
+        record.setEvaluatedAt(LocalDateTime.now());
+        MatchingEvaluationRecord saved = matchingEvaluationRecordRepository.saveAndFlush(record);
+
+        MatchingEvaluationRecord loaded = matchingEvaluationRecordRepository.findById(saved.getId()).orElseThrow();
+        assertEquals(project.getId(), loaded.getProject().getId());
+        assertEquals(freelancer.getId(), loaded.getFreelancer().getId());
+        assertEquals(proposal.getId(), loaded.getAcceptedProposal().getId());
+        assertEquals(MatchingOutcomeLabel.POSITIVE_OUTCOME, loaded.getOutcomeLabel());
+        assertNotNull(loaded.getCreatedAt());
+        assertNotNull(loaded.getEvaluatedAt());
+        assertEquals(1, matchingEvaluationRecordRepository.findFiltered(project.getId(), freelancer.getId(),
+                MatchingOutcomeLabel.POSITIVE_OUTCOME, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1)).size());
+    }
+
+    @Test
+    void shouldPersistTrustScoreSnapshotForFreelancer() {
+        User user = userRepository.save(new User("Trust", "Tester", "trust.snapshot@example.com", "secureHash", Role.FREELANCER, AccountStatus.ACTIVE));
+        FreelancerProfile freelancer = freelancerProfileRepository.save(new FreelancerProfile(user, "Engineer", "Bio", "Remote", 3, new BigDecimal("50.00"), "AVAILABLE"));
+        TrustHistory snapshot = new TrustHistory();
+        snapshot.setFreelancer(freelancer);
+        snapshot.setOverallTrustScore(82.5);
+        snapshot.setCompletionReliabilityScore(100.0);
+        snapshot.setProjectsConsidered(2);
+        snapshot.setCalculatedAt(LocalDateTime.now());
+
+        TrustHistory stored = trustHistoryRepository.saveAndFlush(snapshot);
+
+        assertNotNull(stored.getId());
+        TrustHistory reloaded = trustHistoryRepository.findById(stored.getId()).orElseThrow();
+        assertEquals(freelancer.getId(), reloaded.getFreelancer().getId());
+        assertEquals(82.5, reloaded.getOverallTrustScore());
+        assertEquals(100.0, reloaded.getCompletionReliabilityScore());
+        assertEquals(2, reloaded.getProjectsConsidered());
+        assertNotNull(reloaded.getCalculatedAt());
+    }
 
     @Test
     void shouldPersistAndRetrieveUserAndProfiles() {
@@ -120,7 +182,8 @@ class JpaEntityPersistenceTest {
                 "I have 5 years experience with Java microservices.",
                 new BigDecimal("7500.00"),
                 30,
-                ProposalStatus.SUBMITTED
+                ProposalStatus.SUBMITTED,
+                null
         );
         proposal = proposalRepository.save(proposal);
         assertNotNull(proposal.getId());
@@ -153,11 +216,11 @@ class JpaEntityPersistenceTest {
         ));
 
         // First proposal succeeds
-        proposalRepository.saveAndFlush(new Proposal(project, freelancerProfile, "First proposal", new BigDecimal("1500.00"), 10, ProposalStatus.SUBMITTED));
+        proposalRepository.saveAndFlush(new Proposal(project, freelancerProfile, "First proposal", new BigDecimal("1500.00"), 10, ProposalStatus.SUBMITTED, null));
 
         // Second proposal from same freelancer for same project must violate unique constraint
         assertThrows(DataIntegrityViolationException.class, () -> {
-            proposalRepository.saveAndFlush(new Proposal(project, freelancerProfile, "Duplicate proposal", new BigDecimal("1400.00"), 8, ProposalStatus.SUBMITTED));
+            proposalRepository.saveAndFlush(new Proposal(project, freelancerProfile, "Duplicate proposal", new BigDecimal("1400.00"), 8, ProposalStatus.SUBMITTED, null));
         });
     }
 }

@@ -20,6 +20,14 @@ public class ProjectStatusSchemaConfig {
             jdbcTemplate.execute("UPDATE proposals SET status = 'SUBMITTED' WHERE status = 'PENDING'");
             jdbcTemplate.execute("ALTER TABLE proposals DROP CONSTRAINT IF EXISTS proposals_status_check");
             jdbcTemplate.execute("ALTER TABLE proposals ADD CONSTRAINT proposals_status_check CHECK (status IN ('SUBMITTED', 'UNDER_REVIEW', 'SHORTLISTED', 'ACCEPTED', 'REJECTED', 'WITHDRAWN'))");
+            jdbcTemplate.execute("ALTER TABLE project_skills DROP CONSTRAINT IF EXISTS project_skills_importance_check");
+            jdbcTemplate.execute("ALTER TABLE project_skills ADD CONSTRAINT project_skills_importance_check CHECK (importance IN ('REQUIRED', 'IMPORTANT', 'PREFERRED'))");
+            
+            // Block 5 constraints
+            jdbcTemplate.execute("ALTER TABLE milestones DROP CONSTRAINT IF EXISTS milestones_status_check");
+            jdbcTemplate.execute("ALTER TABLE milestones ADD CONSTRAINT milestones_status_check CHECK (status IN ('PENDING', 'IN_PROGRESS', 'SUBMITTED', 'REVISION_REQUESTED', 'APPROVED'))");
+            jdbcTemplate.execute("ALTER TABLE reviews DROP CONSTRAINT IF EXISTS reviews_rating_check");
+            jdbcTemplate.execute("ALTER TABLE reviews ADD CONSTRAINT reviews_rating_check CHECK (rating >= 1 AND rating <= 5)");
         };
     }
 }

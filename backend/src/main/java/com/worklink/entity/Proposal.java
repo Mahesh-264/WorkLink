@@ -58,16 +58,21 @@ public class Proposal extends BaseEntity {
     @Column(name = "status", nullable = false, length = 30)
     private ProposalStatus status = ProposalStatus.SUBMITTED;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "portfolio_project_id")
+    private PortfolioProject portfolioReference;
+
     public Proposal() {
     }
 
-    public Proposal(Project project, FreelancerProfile freelancer, String coverLetter, BigDecimal proposedAmount, Integer estimatedDays, ProposalStatus status) {
+    public Proposal(Project project, FreelancerProfile freelancer, String coverLetter, BigDecimal proposedAmount, Integer estimatedDays, ProposalStatus status, PortfolioProject portfolioReference) {
         this.project = project;
         this.freelancer = freelancer;
         this.coverLetter = coverLetter;
         this.proposedAmount = proposedAmount;
         this.estimatedDays = estimatedDays;
         this.status = status;
+        this.portfolioReference = portfolioReference;
     }
 
     public Long getId() {
@@ -125,4 +130,13 @@ public class Proposal extends BaseEntity {
     public void setStatus(ProposalStatus status) {
         this.status = status;
     }
+
+    public PortfolioProject getPortfolioReference() {
+        return portfolioReference;
+    }
+
+    public void setPortfolioReference(PortfolioProject portfolioReference) {
+        this.portfolioReference = portfolioReference;
+    }
 }
+

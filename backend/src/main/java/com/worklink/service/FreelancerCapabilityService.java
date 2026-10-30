@@ -1,5 +1,6 @@
 package com.worklink.service;
 
+import com.worklink.dto.capability.FreelancerSkillByNameRequest;
 import com.worklink.dto.capability.FreelancerSkillRequest;
 import com.worklink.dto.capability.FreelancerSkillResponse;
 import com.worklink.dto.capability.PortfolioProjectRequest;
@@ -42,7 +43,8 @@ public class FreelancerCapabilityService {
 
     @Transactional(readOnly = true)
     public List<SkillResponse> getSkills() {
-        return skillRepository.findAll().stream().map(this::toSkillResponse).toList();
+        return skillRepository.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name"))
+                .stream().map(this::toSkillResponse).toList();
     }
 
     @Transactional(readOnly = true)
@@ -57,6 +59,19 @@ public class FreelancerCapabilityService {
             throw new DuplicateResourceException("This skill is already on your profile");
         }
         Skill skill = skillRepository.findById(request.skillId()).orElseThrow(() -> new ResourceNotFoundException("Skill not found"));
+        return toFreelancerSkillResponse(freelancerSkillRepository.save(new FreelancerSkill(profile, skill, request.proficiency())));
+    }
+
+    @Transactional
+    public FreelancerSkillResponse addSkillByName(FreelancerSkillByNameRequest request) {
+        FreelancerProfile profile = currentProfile();
+        String trimmed = request.name().trim();
+        // Find an existing catalog skill (case-insensitive) or create a new one on the fly
+        Skill skill = skillRepository.findByNameIgnoreCase(trimmed)
+                .orElseGet(() -> skillRepository.save(new Skill(trimmed, null)));
+        if (freelancerSkillRepository.existsByFreelancerIdAndSkillId(profile.getId(), skill.getId())) {
+            throw new DuplicateResourceException("This skill is already on your profile");
+        }
         return toFreelancerSkillResponse(freelancerSkillRepository.save(new FreelancerSkill(profile, skill, request.proficiency())));
     }
 

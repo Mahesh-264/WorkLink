@@ -1,2 +1,2 @@
 package com.worklink.dto.proposal; import java.math.BigDecimal; import java.time.LocalDateTime;
-public record ProposalResponse(Long id,Long projectId,String projectTitle,Long freelancerId,String freelancerName,String coverLetter,BigDecimal proposedBudget,Integer estimatedDuration,String status,LocalDateTime createdAt,LocalDateTime updatedAt){}
+public record ProposalResponse(Long id,Long projectId,String projectTitle,Long freelancerId,String freelancerName,String coverLetter,BigDecimal proposedBudget,Integer estimatedDuration,String status,Long portfolioProjectId, String portfolioProjectTitle, LocalDateTime createdAt,LocalDateTime updatedAt){}

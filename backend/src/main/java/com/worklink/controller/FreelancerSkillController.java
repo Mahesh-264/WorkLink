@@ -1,5 +1,6 @@
 package com.worklink.controller;
 
+import com.worklink.dto.capability.FreelancerSkillByNameRequest;
 import com.worklink.dto.capability.FreelancerSkillRequest;
 import com.worklink.dto.capability.FreelancerSkillResponse;
 import com.worklink.service.FreelancerCapabilityService;
@@ -23,6 +24,7 @@ public class FreelancerSkillController {
     public FreelancerSkillController(FreelancerCapabilityService service) { this.service = service; }
     @GetMapping public List<FreelancerSkillResponse> getSkills() { return service.getCurrentSkills(); }
     @PostMapping public ResponseEntity<FreelancerSkillResponse> addSkill(@Valid @RequestBody FreelancerSkillRequest request) { return ResponseEntity.status(HttpStatus.CREATED).body(service.addSkill(request)); }
+    @PostMapping("/by-name") public ResponseEntity<FreelancerSkillResponse> addSkillByName(@Valid @RequestBody FreelancerSkillByNameRequest request) { return ResponseEntity.status(HttpStatus.CREATED).body(service.addSkillByName(request)); }
     @PutMapping("/{skillId}") public FreelancerSkillResponse updateSkill(@PathVariable Long skillId, @Valid @RequestBody FreelancerSkillRequest request) { return service.updateSkill(skillId, request); }
     @DeleteMapping("/{skillId}") public ResponseEntity<Void> deleteSkill(@PathVariable Long skillId) { service.deleteSkill(skillId); return ResponseEntity.noContent().build(); }
 }

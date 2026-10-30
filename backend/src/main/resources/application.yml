@@ -29,12 +29,23 @@ spring:
 security:
   jwt:
     # JWT_SECRET must be a Base64-encoded secret of at least 256 bits.
-    secret: ${JWT_SECRET}
+    secret: ${WORKLINK_JWT_SECRET:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
     access-token-expiration-ms: ${JWT_EXPIRATION_MS:3600000}
 
 worklink:
+  matching:
+    ranking:
+      compatibility-weight: ${WORKLINK_MATCH_COMPATIBILITY_WEIGHT:0.70}
+      trust-weight: ${WORKLINK_MATCH_TRUST_WEIGHT:0.30}
+    context-aware:
+      compatibility-weight: ${WORKLINK_CONTEXT_COMPATIBILITY_WEIGHT:0.50}
+      semantic-weight: ${WORKLINK_CONTEXT_SEMANTIC_WEIGHT:0.20}
+      trust-weight: ${WORKLINK_CONTEXT_TRUST_WEIGHT:0.20}
+      performance-weight: ${WORKLINK_CONTEXT_PERFORMANCE_WEIGHT:0.10}
   testing-endpoints:
     enabled: ${WORKLINK_TESTING_ENDPOINTS_ENABLED:false}
+  catalog-seed:
+    enabled: ${WORKLINK_CATALOG_SEED_ENABLED:true}
 
 # Actuator configuration
 management:

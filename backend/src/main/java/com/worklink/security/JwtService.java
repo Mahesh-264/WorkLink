@@ -72,7 +72,13 @@ public class JwtService {
 
     private SecretKey createSigningKey(String encodedSecret) {
         try {
-            byte[] keyBytes = Decoders.BASE64.decode(encodedSecret);
+            // Secrets are often supplied by environment managers in URL-safe Base64
+            // form (using '-' and '_' instead of '+' and '/'). Normalize that form
+            // so both standard and URL-safe Base64 values work consistently.
+            String normalizedSecret = encodedSecret
+                    .replace('-', '+')
+                    .replace('_', '/');
+            byte[] keyBytes = Decoders.BASE64.decode(normalizedSecret);
             return Keys.hmacShaKeyFor(keyBytes);
         } catch (RuntimeException exception) {
             throw new IllegalStateException("JWT_SECRET must be a valid Base64-encoded key of at least 256 bits", exception);
