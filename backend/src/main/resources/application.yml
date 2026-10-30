@@ -1,3 +1,4 @@
+
 server:
   port: ${PORT:8080}
 
@@ -6,7 +7,7 @@ spring:
     name: WorkLink
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:worklink}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:worklink}?sslmode=require
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:root}
     driver-class-name: org.postgresql.Driver
@@ -42,12 +43,13 @@ worklink:
       semantic-weight: ${WORKLINK_CONTEXT_SEMANTIC_WEIGHT:0.20}
       trust-weight: ${WORKLINK_CONTEXT_TRUST_WEIGHT:0.20}
       performance-weight: ${WORKLINK_CONTEXT_PERFORMANCE_WEIGHT:0.10}
+
   testing-endpoints:
     enabled: ${WORKLINK_TESTING_ENDPOINTS_ENABLED:false}
+
   catalog-seed:
     enabled: ${WORKLINK_CATALOG_SEED_ENABLED:true}
 
-# Actuator configuration
 management:
   endpoints:
     web:
