@@ -3,6 +3,7 @@ import { ArrowLeft, Briefcase, LogIn, Search, UserPlus, Users } from 'lucide-rea
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import api from '../lib/api';
+import { clearSession } from '../lib/auth';
 
 type AuthRole = 'client' | 'freelancer';
 type AuthMode = 'login' | 'register';
@@ -22,6 +23,8 @@ interface LoginResponse extends AuthUser {
 
 interface ApiError {
   message?: string;
+  fieldErrors?: Record<string, string>;
+  error?: string;
 }
 
 const roleContent: Record<AuthRole, { apiRole: AuthUser['role']; label: string; description: string; Icon: typeof Users }> = {
@@ -63,6 +66,7 @@ export const AuthPage = () => {
     setSubmitting(true);
     setError(null);
     setMessage(null);
+    clearSession();
 
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get('email') ?? '');
@@ -96,7 +100,26 @@ export const AuthPage = () => {
       }
     } catch (requestError) {
       if (axios.isAxiosError<ApiError>(requestError)) {
-        setError(requestError.response?.data?.message ?? 'We could not complete your request. Please try again.');
+        const data = requestError.response?.data;
+        if (data?.fieldErrors && Object.keys(data.fieldErrors).length > 0) {
+          setError(Object.values(data.fieldErrors).join('. '));
+        } else if (data?.message) {
+          setError(data.message);
+        } else if (data?.error) {
+          setError(data.error);
+        } else if (typeof data === 'string' && (data as string).trim().length > 0) {
+          setError(data);
+        } else if (requestError.response?.status === 409) {
+          setError('An account with this email already exists.');
+        } else if (requestError.response?.status === 401) {
+          setError(isRegistration ? 'Authentication failed. Please verify your details.' : 'Invalid email or password.');
+        } else if (requestError.code === 'ERR_NETWORK') {
+          setError('Unable to connect to the backend server. Please verify your connection.');
+        } else {
+          setError(requestError.message || 'We could not complete your request. Please try again.');
+        }
+      } else if (requestError instanceof Error) {
+        setError(requestError.message);
       } else {
         setError('We could not complete your request. Please try again.');
       }

@@ -63,6 +63,9 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
+                        // Permit browser OPTIONS preflight requests
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         // Public health endpoint
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -141,16 +144,17 @@ public class SecurityConfig {
         ));
 
         configuration.setAllowedHeaders(List.of(
-                "Content-Type",
                 "Authorization",
+                "Content-Type",
                 "Accept",
-                "Origin"
+                "Origin",
+                "X-Requested-With",
+                "Access-Control-Request-Method",
+                "Access-Control-Request-Headers"
         ));
 
-        // JWT is sent through the Authorization header.
-        // Cookie-based credentials are not required.
-        configuration.setAllowCredentials(false);
-
+        configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source =

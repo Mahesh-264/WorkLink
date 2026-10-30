@@ -49,6 +49,31 @@ class AuthControllerTest {
     }
 
     @Test
+    void registrationDoesNotRequireAuthorizationHeader() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"firstName":"NoAuth","lastName":"User","email":"noauth.auth@example.com","password":"secure-password","role":"CLIENT"}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.email").value("noauth.auth@example.com"))
+                .andExpect(jsonPath("$.role").value("CLIENT"));
+    }
+
+    @Test
+    void registrationAccessibleEvenWithMalformedAuthorizationHeader() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                        .header("Authorization", "Bearer stale-or-malformed-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"firstName":"Stale","lastName":"Token","email":"stale.auth@example.com","password":"secure-password","role":"FREELANCER"}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.email").value("stale.auth@example.com"))
+                .andExpect(jsonPath("$.role").value("FREELANCER"));
+    }
+
+    @Test
     void loginAcceptsValidFreelancerCredentials() throws Exception {
         userRepository.save(new User("Grace", "Hopper", "grace.auth@example.com",
                 passwordEncoder.encode("secure-password"), Role.FREELANCER, AccountStatus.ACTIVE));
